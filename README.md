@@ -242,7 +242,16 @@ Clear session data.
    wrangler r2 bucket create work-rs-files
    ```
 
-3. **Deploy to Cloudflare Workers:**
+3. **Configure R2 lifecycle rules (optional):**
+   ```bash
+   # Delete objects after 1 day (useful for temporary/test data)
+   wrangler r2 bucket lifecycle add work-rs-files "delete-after-1-day" --expire-days 1
+
+   # List all lifecycle rules
+   wrangler r2 bucket lifecycle list work-rs-files
+   ```
+
+4. **Deploy to Cloudflare Workers:**
    ```bash
    wrangler deploy
    ```
