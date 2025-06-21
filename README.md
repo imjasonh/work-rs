@@ -18,6 +18,7 @@ This project demonstrates how to build a Rust application for Cloudflare Workers
 - 💾 R2 object storage integration
 - 🔄 Durable Objects for stateful services
 - ✅ Unit tests with mocks
+- 🚀 CI/CD with GitHub Actions and pre-commit hooks
 
 ## API Endpoints
 
