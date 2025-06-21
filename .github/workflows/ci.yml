@@ -45,16 +45,8 @@ jobs:
           cargo install worker-build
         fi
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
-
-    - name: Install pre-commit
-      run: pip install pre-commit
-
     - name: Run pre-commit
-      run: pre-commit run --all-files
+      uses: pre-commit/action@v3.0.1
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
