@@ -1,0 +1,8 @@
+name = "work-rs"
+main = "build/worker/shim.mjs"
+compatibility_date = "2024-01-01"
+
+[build]
+# Install worker-build if needed, then run it with the full path
+# Using ~/.cargo/bin ensures we use the cargo-installed version even if PATH isn't set
+command = "cargo install -q worker-build && ~/.cargo/bin/worker-build --release"

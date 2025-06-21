@@ -1,0 +1,22 @@
+[package]
+name = "work-rs"
+version = "0.1.0"
+edition = "2021"
+
+# The [lib] section configures how the Rust library is built
+[lib]
+# crate-type = ["cdylib"] tells Rust to build a C-compatible dynamic library
+# that can be loaded by other languages. For WebAssembly/Cloudflare Workers:
+# - "cdylib" produces a .wasm file that can be loaded by JavaScript
+# - This is required for wasm-bindgen to generate the JavaScript bindings
+# - Without this, Rust would build a normal Rust library (.rlib) that can't be used in Workers
+crate-type = ["cdylib"]
+
+[dependencies]
+worker = "0.4.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[profile.release]
+opt-level = "s"
+lto = true
