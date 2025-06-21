@@ -122,7 +122,7 @@ struct MockKVStore {
 
 ## Performance Considerations
 
-1. **Cold Starts**: 
+1. **Cold Starts**:
    - Workers have minimal cold start times (~5ms)
    - Rust WASM modules are larger than JavaScript but still performant
 

@@ -1,5 +1,5 @@
-use worker::*;
 use serde::{Deserialize, Serialize};
+use worker::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct CounterData {
@@ -26,46 +26,37 @@ impl DurableObject for CounterObject {
 
         match _req.method() {
             Method::Get => {
-                let count = match storage.get::<i32>("count").await {
-                    Ok(c) => c,
-                    Err(_) => 0
+                let count = storage.get::<i32>("count").await.unwrap_or_default();
+                let last_updated = storage.get::<u64>("last_updated").await.unwrap_or_default();
+
+                let data = CounterData {
+                    count,
+                    last_updated,
                 };
-                let last_updated = match storage.get::<u64>("last_updated").await {
-                    Ok(t) => t,
-                    Err(_) => 0
-                };
-                
-                let data = CounterData { count, last_updated };
                 Response::from_json(&data)
             }
             Method::Post => {
                 if path.ends_with("/increment") {
-                    let mut count = match storage.get::<i32>("count").await {
-                        Ok(c) => c,
-                        Err(_) => 0
-                    };
+                    let mut count = storage.get::<i32>("count").await.unwrap_or_default();
                     count += 1;
-                    
+
                     let now = js_sys::Date::now() as u64;
                     storage.put("count", count).await?;
                     storage.put("last_updated", now).await?;
-                    
+
                     let data = CounterData {
                         count,
                         last_updated: now,
                     };
                     Response::from_json(&data)
                 } else if path.ends_with("/decrement") {
-                    let mut count = match storage.get::<i32>("count").await {
-                        Ok(c) => c,
-                        Err(_) => 0
-                    };
+                    let mut count = storage.get::<i32>("count").await.unwrap_or_default();
                     count -= 1;
-                    
+
                     let now = js_sys::Date::now() as u64;
                     storage.put("count", count).await?;
                     storage.put("last_updated", now).await?;
-                    
+
                     let data = CounterData {
                         count,
                         last_updated: now,
@@ -80,7 +71,7 @@ impl DurableObject for CounterObject {
                 storage.delete("last_updated").await?;
                 Response::ok("Counter reset")
             }
-            _ => Response::error("Method not allowed", 405)
+            _ => Response::error("Method not allowed", 405),
         }
     }
 }

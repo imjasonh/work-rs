@@ -21,3 +21,6 @@
 # Editor files
 .vscode/
 *.swp
+
+# Pre-commit
+.pre-commit-config.yaml.bak

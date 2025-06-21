@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  pre-commit:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: wasm32-unknown-unknown
+        components: rustfmt, clippy
+
+    - name: Cache cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install cargo-audit
+      run: |
+        if ! command -v cargo-audit &> /dev/null; then
+          cargo install cargo-audit
+        fi
+
+    - name: Install worker-build
+      run: |
+        if ! command -v worker-build &> /dev/null; then
+          cargo install worker-build
+        fi
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install pre-commit
+      run: pip install pre-commit
+
+    - name: Run pre-commit
+      run: pre-commit run --all-files
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: worker-build
+        path: build/
+        if-no-files-found: warn
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    needs: pre-commit
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install tarpaulin
+      run: |
+        if ! command -v cargo-tarpaulin &> /dev/null; then
+          cargo install cargo-tarpaulin
+        fi
+
+    - name: Generate coverage
+      run: cargo tarpaulin --verbose --out Xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./cobertura.xml
+        fail_ci_if_error: false

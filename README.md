@@ -1,4 +1,6 @@
-# worke-rs
+# work-rs
+
+[![CI](https://github.com/imjasonh/work-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/imjasonh/work-rs/actions/workflows/ci.yml)
 
 A Rust web server that runs on Cloudflare Workers using WebAssembly, featuring Durable Objects for stateful services and R2 for object storage.
 
@@ -176,8 +178,8 @@ Clear session data.
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/worke-rs.git
-   cd worke-rs
+   git clone https://github.com/imjasonh/work-rs.git
+   cd work-rs
    ```
 
 2. **Install dependencies:**
@@ -185,35 +187,44 @@ Clear session data.
    cargo build
    ```
 
-3. **Run tests:**
+3. **Set up pre-commit hooks (optional but recommended):**
+   ```bash
+   # Install pre-commit (if not already installed)
+   brew install pre-commit  # or pip install pre-commit
+
+   # Install the git hooks
+   pre-commit install
+   ```
+
+4. **Run tests:**
    ```bash
    cargo test
    ```
 
-4. **Run locally with Durable Objects persistence:**
+5. **Run locally with Durable Objects persistence:**
    ```bash
    wrangler dev --local --persist-to=/tmp/durable-objects
    ```
-   
+
    The server will start at `http://localhost:8787`
-   
+
    Note: The `--local` flag runs the worker locally, and `--persist-to` enables Durable Objects persistence during development.
 
-5. **Test the endpoints:**
+6. **Test the endpoints:**
    ```bash
    # Test GET endpoint
    curl http://localhost:8787/
-   
+
    # Test POST endpoint
    curl -X POST http://localhost:8787/api/data \
      -H "Content-Type: application/json" \
      -d '{"message": "Hello from Rust!"}'
-   
+
    # Test R2 upload
    curl -X PUT http://localhost:8787/files/test.txt \
      -H "Content-Type: text/plain" \
      -d "Hello, R2!"
-   
+
    # Test counter
    curl -X POST http://localhost:8787/counter/increment
    ```
@@ -234,7 +245,7 @@ Clear session data.
    ```bash
    wrangler deploy
    ```
-   
+
    This will compile your Rust code to WebAssembly, bundle it, and deploy it to Cloudflare's edge network.
 
 ## Project Structure
