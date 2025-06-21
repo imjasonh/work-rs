@@ -11,6 +11,20 @@ use r2_storage::handle_r2_request;
 pub use counter_object::CounterObject;
 pub use session_object::SessionObject;
 
+// Tests modules
+#[cfg(test)]
+mod tests;
+#[cfg(test)]
+mod lib_tests;
+#[cfg(test)]
+mod r2_storage_tests;
+#[cfg(test)]
+mod counter_object_tests;
+#[cfg(test)]
+mod session_object_tests;
+#[cfg(test)]
+mod integration_tests;
+
 #[event(fetch)]
 async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     let path = req.path();
