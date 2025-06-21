@@ -1,36 +1,21 @@
 use worker::*;
-use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
-struct ApiDataRequest {
-    message: String,
-}
-
-#[derive(Serialize)]
-struct ApiDataResponse {
-    message: String,
-    timestamp: u64,
-}
+mod r2_storage;
+use r2_storage::handle_r2_request;
 
 #[event(fetch)]
 async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
-    console_log!("Request received: {} {}", req.method(), req.path());
+    let path = req.path();
     
-    let router = Router::new();
-    
-    router
-        .get("/", |_, _| Response::ok("Hello from Rust Workers!"))
-        .post_async("/api/data", |mut req, _| async move {
-            let data: ApiDataRequest = req.json().await?;
-            console_log!("Received data: {}", data.message);
-            
-            let response = ApiDataResponse {
-                message: format!("Echo: {}", data.message),
-                timestamp: js_sys::Date::now() as u64,
-            };
-            
-            Response::from_json(&response)
-        })
-        .run(req, env)
-        .await
+    if path.starts_with("/files/") {
+        match env.bucket("FILES_BUCKET") {
+            Ok(bucket) => {
+                let file_path = path.strip_prefix("/files/").unwrap_or("");
+                handle_r2_request(req, bucket, file_path).await
+            },
+            Err(_) => Response::error("R2 storage is not configured", 503)
+        }
+    } else {
+        Response::ok("Hello from Rust Workers! Use /files/* for R2 operations.")
+    }
 }
