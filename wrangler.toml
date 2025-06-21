@@ -2,6 +2,13 @@ name = "work-rs"
 main = "build/worker/shim.mjs"
 compatibility_date = "2024-01-01"
 
+[observability]
+enabled = true
+head_sampling_rate = 1 # optional. default = 1.
+
+[placement]
+mode = "smart"
+
 [build]
 # Install worker-build if needed, then run it with the full path
 # Using ~/.cargo/bin ensures we use the cargo-installed version even if PATH isn't set
@@ -14,14 +21,14 @@ bucket_name = "work-rs-files"
 # For local development, you can use a different bucket or omit this
 # preview_bucket_name = "work-rs-files-preview"
 
-# Durable Objects configuration (temporarily disabled)
-# [durable_objects]
-# bindings = [
-#   { name = "COUNTER_OBJECT", class_name = "CounterObject" },
-#   { name = "SESSION_OBJECT", class_name = "SessionObject" }
-# ]
+# Durable Objects configuration
+[durable_objects]
+bindings = [
+  { name = "COUNTER_OBJECT", class_name = "CounterObject" },
+  { name = "SESSION_OBJECT", class_name = "SessionObject" }
+]
 
-# Migration for Durable Objects - deleting old ones
+# Migration for Durable Objects
 [[migrations]]
-tag = "v2"
-deleted_classes = ["CounterObject", "SessionObject"]
+tag = "v3"
+new_sqlite_classes = ["CounterObject", "SessionObject"]

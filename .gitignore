@@ -3,6 +3,7 @@
 # Cloudflare Workers build output
 /build/
 /pkg/
+/dist/
 
 # Wrangler
 .wrangler/

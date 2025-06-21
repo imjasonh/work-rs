@@ -13,13 +13,13 @@ pub struct SessionData {
 #[durable_object]
 pub struct SessionObject {
     state: State,
-    env: Env,
+    _env: Env,
 }
 
 #[durable_object]
 impl DurableObject for SessionObject {
     fn new(state: State, env: Env) -> Self {
-        Self { state, env }
+        Self { state, _env: env }
     }
 
     async fn fetch(&mut self, mut req: Request) -> Result<Response> {
@@ -28,23 +28,30 @@ impl DurableObject for SessionObject {
         match req.method() {
             Method::Get => {
                 // Get all session data
-                let user_id: Option<String> = storage.get("user_id").await?;
-                let data: Option<serde_json::Value> = storage.get("data").await?;
-                let created_at: Option<u64> = storage.get("created_at").await?;
-                let updated_at: Option<u64> = storage.get("updated_at").await?;
+                let user_id = match storage.get::<String>("user_id").await {
+                    Ok(id) => id,
+                    Err(_) => return Response::error("Session not found", 404)
+                };
+                let data = match storage.get::<serde_json::Value>("data").await {
+                    Ok(d) => d,
+                    Err(_) => return Response::error("Session not found", 404)
+                };
+                let created_at = match storage.get::<u64>("created_at").await {
+                    Ok(t) => t,
+                    Err(_) => return Response::error("Session not found", 404)
+                };
+                let updated_at = match storage.get::<u64>("updated_at").await {
+                    Ok(t) => t,
+                    Err(_) => return Response::error("Session not found", 404)
+                };
 
-                if let (Some(user_id), Some(data), Some(created_at), Some(updated_at)) = 
-                    (user_id, data, created_at, updated_at) {
-                    let session = SessionData {
-                        user_id,
-                        data,
-                        created_at,
-                        updated_at,
-                    };
-                    Response::from_json(&session)
-                } else {
-                    Response::error("Session not found", 404)
-                }
+                let session = SessionData {
+                    user_id,
+                    data,
+                    created_at,
+                    updated_at,
+                };
+                Response::from_json(&session)
             }
             Method::Put => {
                 // Update session data
@@ -53,8 +60,10 @@ impl DurableObject for SessionObject {
                 let now = js_sys::Date::now() as u64;
                 
                 // If session doesn't exist, create it
-                let created_at: Option<u64> = storage.get("created_at").await?;
-                let created_at = created_at.unwrap_or(now);
+                let created_at = match storage.get::<u64>("created_at").await {
+                    Ok(t) => t,
+                    Err(_) => now
+                };
                 
                 if let Some(user_id) = body.get("user_id").and_then(|v| v.as_str()) {
                     storage.put("user_id", user_id).await?;
@@ -67,7 +76,11 @@ impl DurableObject for SessionObject {
                 storage.put("created_at", created_at).await?;
                 storage.put("updated_at", now).await?;
                 
-                Response::ok("Session updated")
+                Response::from_json(&serde_json::json!({
+                    "status": "updated",
+                    "user_id": body.get("user_id").and_then(|v| v.as_str()).unwrap_or(""),
+                    "timestamp": now
+                }))
             }
             Method::Delete => {
                 // Clear session

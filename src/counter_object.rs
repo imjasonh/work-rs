@@ -11,13 +11,13 @@ pub struct CounterData {
 #[durable_object]
 pub struct CounterObject {
     state: State,
-    env: Env,
+    _env: Env,
 }
 
 #[durable_object]
 impl DurableObject for CounterObject {
     fn new(state: State, env: Env) -> Self {
-        Self { state, env }
+        Self { state, _env: env }
     }
 
     async fn fetch(&mut self, _req: Request) -> Result<Response> {
@@ -26,39 +26,49 @@ impl DurableObject for CounterObject {
 
         match _req.method() {
             Method::Get => {
-                let count: Option<i32> = storage.get("count").await?;
-                let count = count.unwrap_or(0);
-                let last_updated: Option<u64> = storage.get("last_updated").await?;
-                let last_updated = last_updated.unwrap_or(0);
+                let count = match storage.get::<i32>("count").await {
+                    Ok(c) => c,
+                    Err(_) => 0
+                };
+                let last_updated = match storage.get::<u64>("last_updated").await {
+                    Ok(t) => t,
+                    Err(_) => 0
+                };
                 
                 let data = CounterData { count, last_updated };
                 Response::from_json(&data)
             }
             Method::Post => {
-                if path == "/increment" {
-                    let count: Option<i32> = storage.get("count").await?;
-                    let mut count = count.unwrap_or(0);
+                if path.ends_with("/increment") {
+                    let mut count = match storage.get::<i32>("count").await {
+                        Ok(c) => c,
+                        Err(_) => 0
+                    };
                     count += 1;
                     
+                    let now = js_sys::Date::now() as u64;
                     storage.put("count", count).await?;
-                    storage.put("last_updated", js_sys::Date::now() as u64).await?;
+                    storage.put("last_updated", now).await?;
                     
                     let data = CounterData {
                         count,
-                        last_updated: js_sys::Date::now() as u64,
+                        last_updated: now,
                     };
                     Response::from_json(&data)
-                } else if path == "/decrement" {
-                    let count: Option<i32> = storage.get("count").await?;
-                    let mut count = count.unwrap_or(0);
+                } else if path.ends_with("/decrement") {
+                    let mut count = match storage.get::<i32>("count").await {
+                        Ok(c) => c,
+                        Err(_) => 0
+                    };
                     count -= 1;
                     
+                    let now = js_sys::Date::now() as u64;
                     storage.put("count", count).await?;
-                    storage.put("last_updated", js_sys::Date::now() as u64).await?;
+                    storage.put("last_updated", now).await?;
                     
                     let data = CounterData {
                         count,
-                        last_updated: js_sys::Date::now() as u64,
+                        last_updated: now,
                     };
                     Response::from_json(&data)
                 } else {

@@ -1,6 +1,6 @@
-# work-rs
+# worke-rs
 
-A simple Rust web server that runs on Cloudflare Workers using WebAssembly.
+A Rust web server that runs on Cloudflare Workers using WebAssembly, featuring Durable Objects for stateful services and R2 for object storage.
 
 ## Overview
 
@@ -168,29 +168,38 @@ Clear session data.
 ## Prerequisites
 
 - [Rust](https://rustup.rs/) (latest stable version)
-- [Node.js](https://nodejs.org/) (for wrangler CLI)
+- [Node.js](https://nodejs.org/) (v16 or later, for wrangler CLI)
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/): `npm install -g wrangler`
+- A Cloudflare account (free tier is sufficient for development)
 
 ## Development
 
-1. **Install dependencies:**
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/worke-rs.git
+   cd worke-rs
+   ```
+
+2. **Install dependencies:**
    ```bash
    cargo build
    ```
 
-2. **Run tests:**
+3. **Run tests:**
    ```bash
    cargo test
    ```
 
-3. **Run locally:**
+4. **Run locally with Durable Objects persistence:**
    ```bash
-   wrangler dev
+   wrangler dev --local --persist-to=/tmp/durable-objects
    ```
    
    The server will start at `http://localhost:8787`
+   
+   Note: The `--local` flag runs the worker locally, and `--persist-to` enables Durable Objects persistence during development.
 
-4. **Test the endpoints:**
+5. **Test the endpoints:**
    ```bash
    # Test GET endpoint
    curl http://localhost:8787/
@@ -216,10 +225,17 @@ Clear session data.
    wrangler login
    ```
 
-2. **Deploy to Cloudflare Workers:**
+2. **Create R2 bucket (first time only):**
+   ```bash
+   wrangler r2 bucket create work-rs-files
+   ```
+
+3. **Deploy to Cloudflare Workers:**
    ```bash
    wrangler deploy
    ```
+   
+   This will compile your Rust code to WebAssembly, bundle it, and deploy it to Cloudflare's edge network.
 
 ## Project Structure
 
@@ -247,20 +263,22 @@ The `wrangler.toml` file contains the Cloudflare Workers configuration:
 - `durable_objects.bindings`: Durable Object namespaces
 - `migrations`: Durable Object class migrations
 
-### Setting up R2 and Durable Objects
+### Environment Configuration
 
-Before deploying, you need to create an R2 bucket:
-```bash
-wrangler r2 bucket create work-rs-files
-```
+The `wrangler.toml` file includes bindings for:
+- **R2 Storage**: The `FILES_BUCKET` binding connects to your R2 bucket
+- **Durable Objects**: `COUNTER_OBJECT` and `SESSION_OBJECT` namespaces for stateful services
 
-Durable Objects will be automatically created on first deployment.
+Durable Objects are automatically provisioned on first deployment and will be available globally.
 
 ## How It Works
 
-1. The Rust code is compiled to WebAssembly using `wasm32-unknown-unknown` target
-2. The `worker-build` tool packages the WebAssembly module with JavaScript glue code
-3. Cloudflare Workers runtime executes the WebAssembly module in V8 isolates at the edge
+1. **Compilation**: The Rust code is compiled to WebAssembly using the `wasm32-unknown-unknown` target
+2. **Bundling**: The `worker-build` tool packages the WebAssembly module with JavaScript glue code
+3. **Execution**: Cloudflare Workers runtime executes the WebAssembly module in V8 isolates at edge locations
+4. **Routing**: The main `fetch` handler routes requests to appropriate handlers based on URL paths
+5. **State Management**: Durable Objects provide consistent, low-latency storage for stateful operations
+6. **Object Storage**: R2 provides S3-compatible object storage without egress fees
 
 ## Dependencies
 
@@ -273,11 +291,29 @@ Durable Objects will be automatically created on first deployment.
 - `tokio` (v1): Async runtime for tests
 - `mockall` (v0.11): Mocking framework for unit tests
 
+## Troubleshooting
+
+### Common Issues
+
+1. **"R2 storage is not configured" error**
+   - Ensure you've created the R2 bucket: `wrangler r2 bucket create work-rs-files`
+   - Check that your `wrangler.toml` has the correct bucket binding
+
+2. **Durable Objects not working locally**
+   - Use the `--local` flag with wrangler dev
+   - Add `--persist-to=/tmp/durable-objects` for persistence between restarts
+
+3. **Build errors**
+   - Ensure you have the correct Rust toolchain: `rustup target add wasm32-unknown-unknown`
+   - Try clearing the build cache: `cargo clean && cargo build`
+
 ## Resources
 
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
 - [workers-rs GitHub Repository](https://github.com/cloudflare/workers-rs)
 - [Rust on Cloudflare Workers Guide](https://developers.cloudflare.com/workers/languages/rust/)
+- [Durable Objects Documentation](https://developers.cloudflare.com/durable-objects/)
+- [R2 Storage Documentation](https://developers.cloudflare.com/r2/)
 
 ## License
 
