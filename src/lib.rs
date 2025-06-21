@@ -2,13 +2,16 @@ use wasm_bindgen::JsValue;
 use worker::*;
 
 mod counter_object;
+mod r2_rate_limiter;
 mod r2_storage;
+mod rate_limiter;
 mod session_object;
 
 use r2_storage::handle_r2_request;
 
 // Export Durable Objects
 pub use counter_object::CounterObject;
+pub use r2_rate_limiter::R2RateLimiterObject;
 pub use session_object::SessionObject;
 
 // Tests modules
@@ -18,6 +21,8 @@ mod counter_object_tests;
 mod integration_tests;
 #[cfg(test)]
 mod lib_tests;
+#[cfg(test)]
+mod r2_rate_limiter_tests;
 #[cfg(test)]
 mod r2_storage_tests;
 #[cfg(test)]
@@ -35,7 +40,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         match env.bucket("FILES_BUCKET") {
             Ok(bucket) => {
                 let file_path = path.strip_prefix("/files/").unwrap_or("");
-                handle_r2_request(req, bucket, file_path).await
+                handle_r2_request(req, bucket, file_path, &env).await
             }
             Err(_) => Response::error("R2 storage is not configured", 503),
         }

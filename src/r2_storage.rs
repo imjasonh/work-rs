@@ -1,3 +1,4 @@
+use crate::r2_rate_limiter::{check_r2_rate_limit, RateLimitResult};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use worker::*;
@@ -97,7 +98,12 @@ impl R2Storage for R2StorageImpl {
 }
 
 /// Handle R2 file operations via HTTP endpoints
-pub async fn handle_r2_request(mut req: Request, bucket: Bucket, path: &str) -> Result<Response> {
+pub async fn handle_r2_request(
+    mut req: Request,
+    bucket: Bucket,
+    path: &str,
+    env: &Env,
+) -> Result<Response> {
     let storage = R2StorageImpl::new(bucket);
 
     // Extract file key from path (e.g., /files/my-file.txt -> my-file.txt)
@@ -123,13 +129,22 @@ pub async fn handle_r2_request(mut req: Request, bucket: Bucket, path: &str) -> 
             }
         }
         Method::Put | Method::Post => {
-            // Upload file
-            let content_type = req.headers().get("Content-Type")?;
+            // Check rate limit before attempting upload
+            match check_r2_rate_limit(env, key).await? {
+                RateLimitResult::Allowed => {
+                    // Upload file
+                    let content_type = req.headers().get("Content-Type")?;
 
-            let data = req.bytes().await?;
-            let metadata = storage.upload(key, data, content_type.as_deref()).await?;
+                    let data = req.bytes().await?;
+                    let metadata = storage.upload(key, data, content_type.as_deref()).await?;
 
-            Response::from_json(&metadata)
+                    Response::from_json(&metadata)
+                }
+                RateLimitResult::Limited(response) => {
+                    // Return the rate limit response from the Durable Object
+                    Ok(response)
+                }
+            }
         }
         Method::Delete => {
             // Delete file

@@ -85,6 +85,33 @@ Delete a file from R2.
 
 **Response:** `File deleted`
 
+### Rate Limiting
+
+R2 write operations are automatically rate-limited to prevent exceeding Cloudflare's limits:
+
+- **Limit**: 1 write per second per object key
+- **Scope**: Global across all Worker instances
+- **Implementation**: Durable Object-based rate limiter
+
+When rate limited, the API returns:
+- **Status**: 429 Too Many Requests
+- **Headers**:
+  - `Retry-After`: Seconds until retry (e.g., "0.5")
+  - `X-RateLimit-Limit`: "1"
+  - `X-RateLimit-Remaining`: "0"
+  - `X-RateLimit-Reset`: Unix timestamp when limit resets
+
+**Example rate limit response:**
+```
+HTTP/1.1 429 Too Many Requests
+Retry-After: 0.75
+X-RateLimit-Limit: 1
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1699564801
+
+Too Many Requests - R2 write rate limit exceeded
+```
+
 ### Durable Objects Endpoints
 
 #### Counter Object

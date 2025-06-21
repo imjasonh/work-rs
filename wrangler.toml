@@ -25,10 +25,11 @@ bucket_name = "work-rs-files"
 [durable_objects]
 bindings = [
   { name = "COUNTER_OBJECT", class_name = "CounterObject" },
-  { name = "SESSION_OBJECT", class_name = "SessionObject" }
+  { name = "SESSION_OBJECT", class_name = "SessionObject" },
+  { name = "R2_RATE_LIMITER", class_name = "R2RateLimiterObject" }
 ]
 
 # Migration for Durable Objects
 [[migrations]]
-tag = "v3"
-new_sqlite_classes = ["CounterObject", "SessionObject"]
+tag = "v4"
+new_sqlite_classes = ["CounterObject", "SessionObject", "R2RateLimiterObject"]

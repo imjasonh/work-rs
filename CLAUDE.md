@@ -200,9 +200,45 @@ fn error_response(msg: &str, status: u16) -> Result<Response> {
 3. **Edge Computing**: Distributed systems challenges at the edge
 4. **workers-rs Source**: The SDK source code is well-documented
 
+## Rate Limiting Implementation
+
+### R2 Write Rate Limits
+- R2 enforces a limit of **1 write per second per object key**
+- Exceeding this limit results in HTTP 429 responses
+- This is a hard limit that cannot be increased
+
+### Rate Limiting Architecture
+We implemented a Durable Object-based rate limiter to handle this globally:
+
+1. **RateLimiter** (`rate_limiter.rs`): Core rate limiting logic using sliding window algorithm
+2. **R2RateLimiterObject** (`r2_rate_limiter.rs`): Durable Object that maintains global state
+3. **Integration** in `r2_storage.rs`: Checks rate limit before attempting R2 writes
+
+### Key Design Decisions
+- **Durable Object for Global State**: Ensures rate limiting works across all Worker instances
+- **Sliding Window Algorithm**: Accurate rate limiting with millisecond precision
+- **RefCell for Interior Mutability**: Required because DurableObject methods take &self
+- **Automatic Cleanup**: Prevents unbounded memory growth
+
+### API Response Format
+When rate limited, the API returns:
+```
+HTTP/1.1 429 Too Many Requests
+Retry-After: 0.75
+X-RateLimit-Limit: 1
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1699564801
+```
+
+### Testing Considerations
+- Unit tests can't test worker-specific APIs (Headers, Response)
+- Use `test-rate-limit.sh` script for integration testing
+- Load testing revealed the need for this rate limiting
+
 ## Future Considerations
 
 - WebAssembly Component Model support
 - Improved debugging tools for WASM
 - Native async trait support in Rust
 - Expanded Durable Objects features (indexes, queries)
+- Rate limiter sharding for high-volume scenarios
