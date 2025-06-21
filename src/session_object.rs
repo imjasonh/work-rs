@@ -16,14 +16,13 @@ pub struct SessionObject {
     _env: Env,
 }
 
-#[durable_object]
 impl DurableObject for SessionObject {
     fn new(state: State, env: Env) -> Self {
         Self { state, _env: env }
     }
 
-    async fn fetch(&mut self, mut req: Request) -> Result<Response> {
-        let mut storage = self.state.storage();
+    async fn fetch(&self, mut req: Request) -> Result<Response> {
+        let storage = self.state.storage();
 
         match req.method() {
             Method::Get => {

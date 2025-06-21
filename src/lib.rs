@@ -131,7 +131,7 @@ async fn handle_session_request(mut req: Request, env: Env, path: &str) -> Resul
     let mut response = match req.method() {
         Method::Put => {
             let body = req.text().await?;
-            let mut headers = Headers::new();
+            let headers = Headers::new();
             headers.set("content-type", "application/json")?;
             let request = Request::new_with_init(
                 &format!("https://fake-host{}", do_path),

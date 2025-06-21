@@ -10,8 +10,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  pre-commit:
-    name: Pre-commit checks
+  ci:
+    name: CI
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -54,27 +54,6 @@ jobs:
         name: worker-build
         path: build/
         if-no-files-found: warn
-
-  coverage:
-    name: Code Coverage
-    runs-on: ubuntu-latest
-    needs: pre-commit
-    steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@4305c38b25d97ef35a8ad1f985ccf2d2242004f2 # stable
-
-    - name: Cache cargo dependencies
-      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Install tarpaulin
       run: |

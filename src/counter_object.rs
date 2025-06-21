@@ -14,14 +14,13 @@ pub struct CounterObject {
     _env: Env,
 }
 
-#[durable_object]
 impl DurableObject for CounterObject {
     fn new(state: State, env: Env) -> Self {
         Self { state, _env: env }
     }
 
-    async fn fetch(&mut self, _req: Request) -> Result<Response> {
-        let mut storage = self.state.storage();
+    async fn fetch(&self, _req: Request) -> Result<Response> {
+        let storage = self.state.storage();
         let path = _req.path();
 
         match _req.method() {

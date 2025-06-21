@@ -113,7 +113,7 @@ pub async fn handle_r2_request(mut req: Request, bucket: Bucket, path: &str) -> 
                 // Download specific file
                 match storage.download(key).await? {
                     Some(data) => {
-                        let mut headers = Headers::new();
+                        let headers = Headers::new();
                         headers.set("Content-Type", "application/octet-stream")?;
 
                         Ok(Response::from_bytes(data)?.with_headers(headers))
