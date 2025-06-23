@@ -49,12 +49,14 @@ mod r2_storage_tests {
             size: 1024,
             content_type: Some("text/plain".to_string()),
             uploaded_at: 1234567890,
+            sha256: Some("abc123".to_string()),
         };
 
         assert_eq!(metadata.key, "test.txt");
         assert_eq!(metadata.size, 1024);
         assert_eq!(metadata.content_type, Some("text/plain".to_string()));
         assert_eq!(metadata.uploaded_at, 1234567890);
+        assert_eq!(metadata.sha256, Some("abc123".to_string()));
     }
 
     #[test]
