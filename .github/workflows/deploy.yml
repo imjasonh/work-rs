@@ -25,3 +25,14 @@ jobs:
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    - name: Wait for deployment to propagate
+      run: sleep 10
+
+    - name: Run E2E tests against production
+      env:
+        CF_ACCOUNT_SUBDOMAIN: imjasonh.workers.dev
+      run: |
+        PROD_URL="https://work-rs.${{ env.CF_ACCOUNT_SUBDOMAIN }}"
+        echo "Running E2E tests against production: $PROD_URL"
+        cd e2e-test && cargo run --release -- "$PROD_URL"
