@@ -75,6 +75,9 @@ jobs:
 
     - name: Create preview wrangler.toml
       run: |
+        # Preview deployments create new Workers that need migrations to initialize Durable Objects.
+        # The main wrangler.toml doesn't have migrations because the production Worker already exists.
+        # Without this, preview deployments fail with "Cannot create binding for class".
         cp wrangler.toml wrangler-preview.toml
         echo "" >> wrangler-preview.toml
         echo "# Migration for preview deployment" >> wrangler-preview.toml
