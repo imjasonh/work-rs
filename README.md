@@ -296,10 +296,10 @@ Once configured, every push to the `main` branch will automatically build and de
 
 ### Preview Deployments
 
-Pull requests automatically get preview deployments with isolated environments. Each PR deploys to a separate Worker with its own Durable Objects.
+Pull requests automatically get preview deployments after CI passes. Each PR deploys to a separate Worker with its own Durable Objects.
 
 #### Features
-- Automatic deployment on PR open/update
+- Automatic deployment after CI/tests pass
 - Isolated Durable Objects (separate from production)
 - Automatic cleanup when PR is closed
 - Comment on PR with preview URL
