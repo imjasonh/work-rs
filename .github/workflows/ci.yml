@@ -140,3 +140,14 @@ jobs:
               body: comment
             });
           }
+
+    - name: Wait for preview deployment to be ready
+      run: sleep 10
+
+    - name: Run E2E tests against preview
+      env:
+        CF_ACCOUNT_SUBDOMAIN: imjasonh.workers.dev
+      run: |
+        PREVIEW_URL="https://work-rs-preview-${{ github.event.pull_request.number }}.${CF_ACCOUNT_SUBDOMAIN}"
+        echo "Running E2E tests against preview: $PREVIEW_URL"
+        ./e2e-test.sh "$PREVIEW_URL"

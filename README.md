@@ -238,6 +238,35 @@ Clear session data.
    curl -X POST http://localhost:8787/counter/increment
    ```
 
+7. **Run end-to-end tests:**
+   ```bash
+   # Test against local development server
+   ./e2e-test.sh http://localhost:8787
+
+   # Test against deployed Worker
+   ./e2e-test.sh https://your-worker.workers.dev
+   ```
+
+## Testing
+
+### Unit Tests
+Run Rust unit tests with mocks:
+```bash
+cargo test
+```
+
+### End-to-End Tests
+The `e2e-test.sh` script runs comprehensive tests against a live Worker:
+- Basic connectivity and routing
+- Counter Durable Object operations
+- Session storage functionality
+- R2 file upload/download/delete
+- Security tests (path traversal prevention)
+
+E2E tests run automatically:
+- Against preview deployments on PRs
+- Against production after merging to main
+
 ## Deployment
 
 ### Manual Deployment
