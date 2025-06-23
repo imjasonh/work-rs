@@ -28,4 +28,3 @@ bindings = [
   { name = "SESSION_OBJECT", class_name = "SessionObject" },
   { name = "FILE_MAPPING_OBJECT", class_name = "FileMappingObject" }
 ]
-
