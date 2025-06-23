@@ -13,6 +13,10 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
@@ -54,18 +58,3 @@ jobs:
         name: worker-build
         path: build/
         if-no-files-found: warn
-
-    - name: Install tarpaulin
-      run: |
-        if ! command -v cargo-tarpaulin &> /dev/null; then
-          cargo install cargo-tarpaulin
-        fi
-
-    - name: Generate coverage
-      run: cargo tarpaulin --verbose --out Xml
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5
-      with:
-        files: ./cobertura.xml
-        fail_ci_if_error: false
