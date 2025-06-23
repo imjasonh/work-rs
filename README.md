@@ -239,12 +239,23 @@ Clear session data.
    ```
 
 7. **Run end-to-end tests:**
+
+   **Option 1: Bash script (quick)**
    ```bash
    # Test against local development server
    ./e2e-test.sh http://localhost:8787
 
    # Test against deployed Worker
    ./e2e-test.sh https://your-worker.workers.dev
+   ```
+
+   **Option 2: Rust test runner (detailed)**
+   ```bash
+   # Test against local development server
+   cd e2e-test && cargo run -- http://localhost:8787
+
+   # Test against deployed Worker
+   cd e2e-test && cargo run -- https://your-worker.workers.dev
    ```
 
 ## Testing
@@ -256,12 +267,23 @@ cargo test
 ```
 
 ### End-to-End Tests
-The `e2e-test.sh` script runs comprehensive tests against a live Worker:
+We provide two options for end-to-end testing:
+
+**Bash Script (`e2e-test.sh`)**: Quick and simple shell-based tests
+**Rust Test Runner (`e2e-test/`)**: Comprehensive table-driven tests with detailed output
+
+Both test suites validate:
 - Basic connectivity and routing
 - Counter Durable Object operations
 - Session storage functionality
-- R2 file upload/download/delete
+- R2 file upload/download/delete with CAS
 - Security tests (path traversal prevention)
+
+The Rust test runner provides additional features:
+- Colorized pass/fail output
+- Execution time for each test
+- Detailed error messages
+- Summary of all failed tests
 
 E2E tests run automatically:
 - Against preview deployments on PRs

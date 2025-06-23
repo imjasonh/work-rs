@@ -150,4 +150,4 @@ jobs:
       run: |
         PREVIEW_URL="https://work-rs-preview-${{ github.event.pull_request.number }}.${CF_ACCOUNT_SUBDOMAIN}"
         echo "Running E2E tests against preview: $PREVIEW_URL"
-        ./e2e-test.sh "$PREVIEW_URL"
+        cd e2e-test && cargo run --release -- "$PREVIEW_URL"

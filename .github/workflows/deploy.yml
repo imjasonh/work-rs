@@ -35,4 +35,4 @@ jobs:
       run: |
         PROD_URL="https://work-rs.${{ env.CF_ACCOUNT_SUBDOMAIN }}"
         echo "Running E2E tests against production: $PROD_URL"
-        ./e2e-test.sh "$PROD_URL"
+        cd e2e-test && cargo run --release -- "$PROD_URL"

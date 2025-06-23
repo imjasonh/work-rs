@@ -1,3 +1,6 @@
+[workspace]
+members = [".", "e2e-test"]
+
 [package]
 name = "work-rs"
 version = "0.1.0"
