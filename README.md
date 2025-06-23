@@ -240,6 +240,8 @@ Clear session data.
 
 ## Deployment
 
+### Manual Deployment
+
 1. **Login to Cloudflare (first time only):**
    ```bash
    wrangler login
@@ -265,6 +267,32 @@ Clear session data.
    ```
 
    This will compile your Rust code to WebAssembly, bundle it, and deploy it to Cloudflare's edge network.
+
+### Automated Deployment (GitHub Actions)
+
+This repository includes a GitHub Actions workflow that automatically deploys to Cloudflare Workers on pushes to the `main` branch.
+
+#### Setup
+
+1. **Get your Cloudflare API token:**
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com/profile/api-tokens)
+   - Click "Create Token"
+   - Use the "Edit Cloudflare Workers" template or create a custom token with:
+     - Account: `Cloudflare Workers Scripts:Edit`
+     - Zone: `Zone:Read` (if using custom domains)
+
+2. **Get your Cloudflare Account ID:**
+   - Go to any domain in your Cloudflare account
+   - The Account ID is in the right sidebar
+
+3. **Add secrets to your GitHub repository:**
+   - Go to your repository on GitHub
+   - Navigate to Settings → Secrets and variables → Actions
+   - Add the following secrets:
+     - `CLOUDFLARE_API_TOKEN`: Your API token from step 1
+     - `CLOUDFLARE_ACCOUNT_ID`: Your account ID from step 2
+
+Once configured, every push to the `main` branch will automatically build and deploy your Worker to Cloudflare.
 
 ## Project Structure
 
