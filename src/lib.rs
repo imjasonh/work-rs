@@ -2,13 +2,16 @@ use wasm_bindgen::JsValue;
 use worker::*;
 
 mod counter_object;
+mod file_mapping_object;
 mod r2_storage;
 mod session_object;
+mod sha256;
 
 use r2_storage::handle_r2_request;
 
 // Export Durable Objects
 pub use counter_object::CounterObject;
+pub use file_mapping_object::FileMappingObject;
 pub use session_object::SessionObject;
 
 // Tests modules
@@ -32,13 +35,8 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     // Handle different routes without Router
     if path.starts_with("/files/") {
         // R2 operations
-        match env.bucket("FILES_BUCKET") {
-            Ok(bucket) => {
-                let file_path = path.strip_prefix("/files/").unwrap_or("");
-                handle_r2_request(req, bucket, file_path).await
-            }
-            Err(_) => Response::error("R2 storage is not configured", 503),
-        }
+        let file_path = path.strip_prefix("/files/").unwrap_or("");
+        handle_r2_request(req, env, file_path).await
     } else if path.starts_with("/counter") {
         // Counter Durable Object operations
         handle_counter_request(req, env, &path).await
