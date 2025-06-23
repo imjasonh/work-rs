@@ -28,8 +28,3 @@ bindings = [
   { name = "SESSION_OBJECT", class_name = "SessionObject" },
   { name = "FILE_MAPPING_OBJECT", class_name = "FileMappingObject" }
 ]
-
-# Migration for Durable Objects
-[[migrations]]
-tag = "v4"
-new_sqlite_classes = ["CounterObject", "SessionObject", "FileMappingObject"]
