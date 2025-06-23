@@ -68,10 +68,11 @@ jobs:
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@4305c38b25d97ef35a8ad1f985ccf2d2242004f2 # stable
+    - name: Download build artifacts
+      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
       with:
-        targets: wasm32-unknown-unknown
+        name: worker-build
+        path: build/
 
     - name: Create preview wrangler.toml
       run: |
@@ -84,6 +85,10 @@ jobs:
         echo "[[migrations]]" >> wrangler-preview.toml
         echo "tag = \"v1\"" >> wrangler-preview.toml
         echo "new_sqlite_classes = [\"CounterObject\", \"SessionObject\", \"FileMappingObject\"]" >> wrangler-preview.toml
+        # Override build command to skip rebuild since we're using artifacts from CI job
+        echo "" >> wrangler-preview.toml
+        echo "[build]" >> wrangler-preview.toml
+        echo "command = \"echo 'Using pre-built artifacts'\"" >> wrangler-preview.toml
 
     - name: Deploy Preview to Cloudflare Workers
       id: deploy
