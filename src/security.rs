@@ -3,20 +3,28 @@
 /// Sanitize a file path to prevent directory traversal attacks
 ///
 /// This function:
-/// - Removes any `..` components that could escape the intended directory
-/// - Removes leading slashes to ensure relative paths
+/// - Rejects any path containing `..` (parent directory references)
 /// - Rejects paths with null bytes
+/// - Removes leading slashes to ensure relative paths
 /// - Normalizes multiple slashes
+/// - Removes current directory references (`.`)
 pub fn sanitize_path(path: &str) -> Result<String, &'static str> {
     // Reject null bytes
     if path.contains('\0') {
         return Err("Invalid path: contains null byte");
     }
 
-    // Split path into components and filter out dangerous ones
+    // Reject any path containing parent directory references
+    // Check for ".." as a complete path component
+    let has_parent_ref = path.split('/').any(|component| component == "..");
+    if has_parent_ref {
+        return Err("Invalid path: contains parent directory reference (..)");
+    }
+
+    // Split path into components and filter out empty and current directory references
     let components: Vec<&str> = path
         .split('/')
-        .filter(|component| !component.is_empty() && *component != "." && *component != "..")
+        .filter(|component| !component.is_empty() && *component != ".")
         .collect();
 
     // Reject empty paths after sanitization
@@ -41,12 +49,14 @@ mod tests {
 
     #[test]
     fn test_sanitize_path_traversal() {
-        assert_eq!(sanitize_path("../file.txt").unwrap(), "file.txt");
-        assert_eq!(sanitize_path("../../etc/passwd").unwrap(), "etc/passwd");
-        assert_eq!(
-            sanitize_path("folder/../file.txt").unwrap(),
-            "folder/file.txt"
-        );
+        // All paths containing .. should be rejected
+        assert!(sanitize_path("../file.txt").is_err());
+        assert!(sanitize_path("../../etc/passwd").is_err());
+        assert!(sanitize_path("folder/../file.txt").is_err());
+        assert!(sanitize_path("../").is_err());
+        assert!(sanitize_path("a/b/../c").is_err());
+
+        // Paths with only . should work
         assert_eq!(
             sanitize_path("./folder/./file.txt").unwrap(),
             "folder/file.txt"
@@ -79,7 +89,31 @@ mod tests {
     #[test]
     fn test_sanitize_path_edge_cases() {
         assert_eq!(sanitize_path("...txt").unwrap(), "...txt"); // Three dots is valid
-        assert_eq!(sanitize_path("..file").unwrap(), "..file"); // Two dots at start is valid
-        assert_eq!(sanitize_path("file..").unwrap(), "file.."); // Two dots at end is valid
+        assert_eq!(sanitize_path("..file").unwrap(), "..file"); // Two dots at start is valid as filename
+        assert_eq!(sanitize_path("file..").unwrap(), "file.."); // Two dots at end is valid as filename
+        assert_eq!(sanitize_path("fi..le").unwrap(), "fi..le"); // Two dots in middle is valid as filename
+        assert_eq!(sanitize_path("f.i.l.e").unwrap(), "f.i.l.e"); // Single dots are fine
+
+        // But ".." as a complete path component is rejected
+        assert!(sanitize_path("..").is_err());
+        assert!(sanitize_path("../").is_err());
+        assert!(sanitize_path("/..").is_err());
+        assert!(sanitize_path("/../").is_err());
+    }
+
+    #[test]
+    fn test_sanitize_path_error_messages() {
+        assert_eq!(
+            sanitize_path("../etc/passwd").unwrap_err(),
+            "Invalid path: contains parent directory reference (..)"
+        );
+        assert_eq!(
+            sanitize_path("file\0.txt").unwrap_err(),
+            "Invalid path: contains null byte"
+        );
+        assert_eq!(
+            sanitize_path("").unwrap_err(),
+            "Invalid path: empty after sanitization"
+        );
     }
 }
