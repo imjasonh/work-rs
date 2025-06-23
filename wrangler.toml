@@ -33,8 +33,3 @@ bindings = [
 [[migrations]]
 tag = "v4"
 new_sqlite_classes = ["CounterObject", "SessionObject", "FileMappingObject"]
-
-[[migrations]]
-tag = "v5"
-new_sqlite_classes = ["FileMappingObject"]
-deleted_classes = ["R2RateLimiterObject"]

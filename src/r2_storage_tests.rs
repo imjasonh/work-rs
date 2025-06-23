@@ -3,6 +3,10 @@ mod r2_storage_tests {
     use crate::r2_storage::*;
     use std::collections::HashMap;
 
+    // Note: These tests use mocks rather than the real R2StorageImpl
+    // This means they won't catch compilation errors in the actual implementation
+    // The real implementation is validated through integration tests and deployment
+
     // Mock R2 bucket for testing
     struct MockR2Bucket {
         files: HashMap<String, (Vec<u8>, Option<String>)>,
