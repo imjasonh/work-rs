@@ -294,6 +294,24 @@ This repository includes a GitHub Actions workflow that automatically deploys to
 
 Once configured, every push to the `main` branch will automatically build and deploy your Worker to Cloudflare.
 
+### Preview Deployments
+
+Pull requests automatically get preview deployments with isolated environments. Each PR deploys to a separate Worker with its own Durable Objects.
+
+#### Features
+- Automatic deployment on PR open/update
+- Isolated Durable Objects (separate from production)
+- Automatic cleanup when PR is closed
+- Comment on PR with preview URL
+
+#### Setup
+Add these additional secrets (optional):
+- `CF_ACCOUNT_SUBDOMAIN`: Your Cloudflare subdomain (defaults to 'workers')
+
+Preview URLs follow the pattern: `https://work-rs-preview-{PR_NUMBER}.{SUBDOMAIN}.dev`
+
+**Note**: Preview deployments create separate Workers with their own Durable Objects, so data is not shared with production.
+
 ## Project Structure
 
 ```
