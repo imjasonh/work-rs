@@ -80,15 +80,16 @@ jobs:
         # The main wrangler.toml doesn't have migrations because the production Worker already exists.
         # Without this, preview deployments fail with "Cannot create binding for class".
         cp wrangler.toml wrangler-preview.toml
+
+        # Replace the build command to skip rebuild since we're using artifacts from CI job
+        sed -i 's/command = .*/command = "echo Using pre-built artifacts"/' wrangler-preview.toml
+
+        # Add migrations at the end
         echo "" >> wrangler-preview.toml
         echo "# Migration for preview deployment" >> wrangler-preview.toml
         echo "[[migrations]]" >> wrangler-preview.toml
         echo "tag = \"v1\"" >> wrangler-preview.toml
         echo "new_sqlite_classes = [\"CounterObject\", \"SessionObject\", \"FileMappingObject\"]" >> wrangler-preview.toml
-        # Override build command to skip rebuild since we're using artifacts from CI job
-        echo "" >> wrangler-preview.toml
-        echo "[build]" >> wrangler-preview.toml
-        echo "command = \"echo 'Using pre-built artifacts'\"" >> wrangler-preview.toml
 
     - name: Deploy Preview to Cloudflare Workers
       id: deploy
