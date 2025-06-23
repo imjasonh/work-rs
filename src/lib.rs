@@ -4,10 +4,12 @@ use worker::*;
 mod counter_object;
 mod file_mapping_object;
 mod r2_storage;
+mod security;
 mod session_object;
 mod sha256;
 
 use r2_storage::handle_r2_request;
+use security::sanitize_path;
 
 // Export Durable Objects
 pub use counter_object::CounterObject;
@@ -36,7 +38,11 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     if path.starts_with("/files/") {
         // R2 operations
         let file_path = path.strip_prefix("/files/").unwrap_or("");
-        handle_r2_request(req, env, file_path).await
+        // Sanitize the path to prevent directory traversal
+        match sanitize_path(file_path) {
+            Ok(safe_path) => handle_r2_request(req, env, &safe_path).await,
+            Err(e) => Response::error(e, 400),
+        }
     } else if path.starts_with("/counter") {
         // Counter Durable Object operations
         handle_counter_request(req, env, &path).await
@@ -97,11 +103,15 @@ async fn handle_counter_request(req: Request, env: Env, path: &str) -> Result<Re
 
 async fn handle_session_request(mut req: Request, env: Env, path: &str) -> Result<Response> {
     // Get the session ID from the path
-    let parts: Vec<&str> = path
-        .strip_prefix("/session/")
-        .unwrap_or("")
-        .split('/')
-        .collect();
+    let session_path = path.strip_prefix("/session/").unwrap_or("");
+
+    // Sanitize the path to prevent directory traversal
+    let safe_path = match sanitize_path(session_path) {
+        Ok(p) => p,
+        Err(e) => return Response::error(e, 400),
+    };
+
+    let parts: Vec<&str> = safe_path.split('/').collect();
     if parts.is_empty() || parts[0].is_empty() {
         return Response::error("Session ID required", 400);
     }
