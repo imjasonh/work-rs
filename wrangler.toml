@@ -29,7 +29,8 @@ bindings = [
   { name = "FILE_MAPPING_OBJECT", class_name = "FileMappingObject" }
 ]
 
-# Migration for Durable Objects
-[[migrations]]
-tag = "v4"
-new_sqlite_classes = ["CounterObject", "SessionObject", "FileMappingObject"]
+# Migrations are commented out because the Durable Objects already exist
+# and cannot be migrated to SQLite after they have data
+# [[migrations]]
+# tag = "v4"
+# new_sqlite_classes = ["CounterObject", "SessionObject", "FileMappingObject"]
