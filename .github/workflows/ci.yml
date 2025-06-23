@@ -56,3 +56,87 @@ jobs:
         name: worker-build
         path: build/
         if-no-files-found: warn
+
+  preview:
+    name: Deploy Preview
+    needs: ci
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+      with:
+        name: worker-build
+        path: build/
+
+    - name: Create preview wrangler.toml
+      run: |
+        # Preview deployments create new Workers that need migrations to initialize Durable Objects.
+        # The main wrangler.toml doesn't have migrations because the production Worker already exists.
+        # Without this, preview deployments fail with "Cannot create binding for class".
+        cp wrangler.toml wrangler-preview.toml
+
+        # Replace the build command to skip rebuild since we're using artifacts from CI job
+        sed -i 's/command = .*/command = "echo Using pre-built artifacts"/' wrangler-preview.toml
+
+        # Add migrations at the end
+        echo "" >> wrangler-preview.toml
+        echo "# Migration for preview deployment" >> wrangler-preview.toml
+        echo "[[migrations]]" >> wrangler-preview.toml
+        echo "tag = \"v1\"" >> wrangler-preview.toml
+        echo "new_sqlite_classes = [\"CounterObject\", \"SessionObject\", \"FileMappingObject\"]" >> wrangler-preview.toml
+
+    - name: Deploy Preview to Cloudflare Workers
+      id: deploy
+      uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3.14.1
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        command: deploy --name work-rs-preview-${{ github.event.pull_request.number }} --compatibility-date 2024-01-01 --config wrangler-preview.toml
+
+    - name: Comment on PR
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+      env:
+        CF_ACCOUNT_SUBDOMAIN: imjasonh.workers.dev
+      with:
+        script: |
+          const prNumber = context.payload.pull_request.number;
+          const deploymentUrl = `https://work-rs-preview-${prNumber}.${process.env.CF_ACCOUNT_SUBDOMAIN}`;
+
+          const comment = `## 🚀 Preview Deployment
+
+          Your preview is ready at: ${deploymentUrl}
+
+          **Note**: This preview uses separate Durable Objects from production.`;
+
+          // Find and update existing comment or create new one
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: prNumber
+          });
+
+          const botComment = comments.find(comment =>
+            comment.user.type === 'Bot' && comment.body.includes('Preview Deployment')
+          );
+
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: comment
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: comment
+            });
+          }
